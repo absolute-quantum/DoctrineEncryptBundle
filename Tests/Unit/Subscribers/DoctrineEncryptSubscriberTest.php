@@ -209,7 +209,6 @@ class DoctrineEncryptSubscriberTest extends TestCase
             ->willReturn($uow)
         ;
         $preFlush = new PreFlushEventArgs($em);
-
         $this->subscriber->preFlush($preFlush);
 
         $this->assertStringStartsWith('encrypted-', $user->name);

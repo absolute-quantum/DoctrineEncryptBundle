@@ -2,6 +2,11 @@
 
 namespace Ambta\DoctrineEncryptBundle\Subscribers;
 
+use Defuse\Crypto\Exception\CryptoException;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\UnitOfWork;
+use ParagonIE\Halite\Alerts\HaliteAlert;
+use ParagonIE\Halite\HiddenString;
 use ReflectionClass;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Events;
@@ -54,6 +59,12 @@ class DoctrineEncryptSubscriber implements EventSubscriber
     private $restoreEncryptor;
 
     /**
+     * User for storing all entities we decrypted after flushing, so we know which ones to re-encrypt
+     * @var ArrayCollection
+     */
+    private $decryptedEntities;
+
+    /**
      * Count amount of decrypted values in this service
      * @var integer
      */
@@ -76,6 +87,7 @@ class DoctrineEncryptSubscriber implements EventSubscriber
         $this->annReader = $annReader;
         $this->encryptor = $encryptor;
         $this->restoreEncryptor = $this->encryptor;
+        $this->decryptedEntities = new ArrayCollection();
     }
 
     /**
@@ -157,6 +169,11 @@ class DoctrineEncryptSubscriber implements EventSubscriber
         foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
             $this->processFields($entity);
         }
+
+        // Re-encrypt all previously decrypted entities
+        foreach ($this->decryptedEntities as $entity) {
+            $this->processFields($entity, true,$unitOfWork);
+        }
     }
 
     /**
@@ -196,12 +213,13 @@ class DoctrineEncryptSubscriber implements EventSubscriber
      *
      * @param Object $entity doctrine entity
      * @param Boolean $isEncryptOperation If true - encrypt, false - decrypt entity
+     * @param UnitOfWork|null $unitOfWork
      *
      * @throws \RuntimeException
      *
      * @return object|null
      */
-    public function processFields($entity, $isEncryptOperation = true)
+    public function processFields($entity, $isEncryptOperation = true, $unitOfWork = null)
     {
         if (!empty($this->encryptor)) {
             // Check which operation to be used
@@ -228,6 +246,7 @@ class DoctrineEncryptSubscriber implements EventSubscriber
                     if ($encryptorMethod == 'decrypt') {
                         if (!is_null($value) and !empty($value)) {
                             if (substr($value, -strlen(self::ENCRYPTION_MARKER)) == self::ENCRYPTION_MARKER) {
+                                $this->decryptedEntities->add($entity);
                                 $this->decryptCounter++;
                                 $currentPropValue = $this->encryptor->decrypt(substr($value, 0, -5));
                                 $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
@@ -235,10 +254,18 @@ class DoctrineEncryptSubscriber implements EventSubscriber
                         }
                     } else {
                         if (!is_null($value) and !empty($value)) {
-                            if (substr($value, -strlen(self::ENCRYPTION_MARKER)) != self::ENCRYPTION_MARKER) {
-                                $this->encryptCounter++;
-                                $currentPropValue = $this->encryptor->encrypt($value).self::ENCRYPTION_MARKER;
-                                $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
+                            if (substr($value, -strlen(self::ENCRYPTION_MARKER)) !== self::ENCRYPTION_MARKER) {
+                                // Check if original unencrypted differs from new unencrypted value
+                                if ($unitOfWork !== null && !$this->hasEncryptedFieldsChanged($unitOfWork, $entity,$refProperty)) {
+                                    $originalData = $unitOfWork->getOriginalEntityData($entity);
+
+                                    //Revert to original encrypted value if both unencrypted values are the same
+                                    $pac->setValue($entity,$refProperty->getName(),$originalData[$refProperty->getName()]);
+                                } else {
+                                    $this->encryptCounter++;
+                                    $currentPropValue = $this->encryptor->encrypt($value).self::ENCRYPTION_MARKER;
+                                    $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
+                                }
                             }
                         }
                     }
@@ -250,6 +277,62 @@ class DoctrineEncryptSubscriber implements EventSubscriber
 
         return $entity;
     }
+
+    /**
+     * Method that check if current encrypt values match with old ones
+     * @param UnitOfWork $unitOfWork
+     * @param $entity
+     * @param ReflectionProperty $refProperty
+     * @return bool
+     */
+    private function hasEncryptedFieldsChanged($unitOfWork, $entity, ReflectionProperty $refProperty)
+    {
+        $originalData = $unitOfWork->getOriginalEntityData($entity);
+
+        //Get old value
+        try{
+            if(!isset($originalData[$refProperty->getName()])) {
+                return true;
+            }
+
+            // Always encrypt when original-value is not encrypted
+            if (substr($originalData[$refProperty->getName()], -strlen(self::ENCRYPTION_MARKER)) !== self::ENCRYPTION_MARKER) {
+                return true;
+            }
+
+            $oldValue = $this->encryptor->decrypt(substr($originalData[$refProperty->getName()], 0, -5));
+            if($oldValue instanceof HiddenString){
+                $oldValue=$oldValue->getString();
+            }
+        } catch (HaliteAlert $e){
+            $oldValue=$originalData[$refProperty->getName()];
+        } catch (\TypeError $e) {
+            $oldValue=$originalData[$refProperty->getName()];
+        } catch (CryptoException $e ){
+            $oldValue=$originalData[$refProperty->getName()];
+        }
+
+        //Get new value
+        $pac = PropertyAccess::createPropertyAccessor();
+        $newEntityValue = $pac->getValue($entity, $refProperty->getName());
+
+        if (substr($newEntityValue, -strlen(self::ENCRYPTION_MARKER)) !== self::ENCRYPTION_MARKER) {
+            $newValue = $newEntityValue;
+        } else {
+            try{
+                $newValue = $this->encryptor->decrypt(substr($newEntityValue, 0, -5));
+            } catch (HaliteAlert $e){
+                $newValue = $newEntityValue;
+            } catch (\TypeError $e) {
+                $newValue = $newEntityValue;
+            } catch (CryptoException $e ){
+                $newValue = $newEntityValue;
+            }
+        }
+
+        return $newValue != $oldValue;
+    }
+
 
     private function handleEmbeddedAnnotation($entity, ReflectionProperty $embeddedProperty, bool $isEncryptOperation = true)
     {
