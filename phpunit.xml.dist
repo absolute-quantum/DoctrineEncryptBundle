@@ -12,7 +12,7 @@
             <directory suffix="Test.php">./Tests/Unit</directory>
         </testsuite>
         <testsuite name="functional">
-            <directory suffix="Test.php">./Tests/Functional</directory>
+            <directory phpVersion="7.3.0" phpVersionOperator=">=" suffix="Test.php">./Tests/Functional</directory>
         </testsuite>
     </testsuites>
 
