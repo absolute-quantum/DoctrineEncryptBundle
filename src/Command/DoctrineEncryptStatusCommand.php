@@ -27,7 +27,7 @@ class DoctrineEncryptStatusCommand extends AbstractCommand
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $metaDataArray = $this->entityManager->getMetadataFactory()->getAllMetadata();
 
@@ -53,5 +53,6 @@ class DoctrineEncryptStatusCommand extends AbstractCommand
 
         $output->writeln('');
         $output->writeln(sprintf('<info>%d</info> entities found which are containing <info>%d</info> encrypted properties.', count($metaDataArray), $totalCount));
+        return self::SUCCESS;
     }
 }

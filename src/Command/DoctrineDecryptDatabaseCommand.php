@@ -33,7 +33,7 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // Get entity manager, question helper, subscriber service and annotation reader
         $question = $this->getHelper('question');
@@ -82,7 +82,7 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
         );
 
         if (!$question->ask($input, $output, $confirmationQuestion)) {
-            return 1;
+            return self::FAILURE;
         }
 
         // Start decrypting database
@@ -146,5 +146,6 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
         }
 
         $output->writeln('' . PHP_EOL . 'Decryption finished values found: <info>' . $valueCounter . '</info>, decrypted: <info>' . $this->subscriber->decryptCounter . '</info>.' . PHP_EOL . 'All values are now decrypted.');
+        return self::SUCCESS;
     }
 }
