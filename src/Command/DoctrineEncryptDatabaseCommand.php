@@ -84,7 +84,7 @@ class DoctrineEncryptDatabaseCommand extends AbstractCommand
             $output->writeln(sprintf('Processing <comment>%s</comment>', $metaData->name));
             $progressBar = new ProgressBar($output, $totalCount);
             foreach ($iterator as $row) {
-                $this->subscriber->processFields($row[0]);
+                $this->subscriber->processFields($row[0], $this->entityManager);
 
                 if (($i % $batchSize) === 0) {
                     $this->entityManager->flush();
