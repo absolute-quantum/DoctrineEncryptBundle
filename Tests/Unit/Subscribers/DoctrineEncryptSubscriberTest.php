@@ -30,153 +30,130 @@ class DoctrineEncryptSubscriberTest extends TestCase
      */
     private $encryptor;
 
-    /**
-     * @var Reader|MockObject
-     */
-    private $reader;
-
-    protected function setUp()
-    {
-        $this->encryptor = $this->createMock(EncryptorInterface::class);
-        $this->encryptor
-            ->expects($this->any())
-            ->method('encrypt')
-            ->willReturnCallback(function (string $arg) {
-                return 'encrypted-'.$arg;
-            })
-        ;
-        $this->encryptor
-            ->expects($this->any())
-            ->method('decrypt')
-            ->willReturnCallback(function (string $arg) {
-                return preg_replace('/^encrypted-/', '', $arg);
-            })
-        ;
-
-        $this->reader = $this->createMock(Reader::class);
-        $this->reader->expects($this->any())
-            ->method('getPropertyAnnotation')
-            ->willReturnCallback(function (\ReflectionProperty $reflProperty, string $class) {
-                if (Encrypted::class === $class) {
-                    return \in_array($reflProperty->getName(), ['name', 'address', 'extra']);
-                }
-                if (Embedded::class === $class) {
-                    return 'user' === $reflProperty->getName();
-                }
-
-                return false;
-            })
-        ;
-
-        $this->subscriber = new DoctrineEncryptSubscriber($this->reader, $this->encryptor);
-    }
-
-    public function testSetRestorEncryptor()
+    public function testSetRestoreEncryptor()
     {
         $replaceEncryptor = $this->createMock(EncryptorInterface::class);
 
-        $this->assertSame($this->encryptor, $this->subscriber->getEncryptor());
+        self::assertSame($this->encryptor, $this->subscriber->getEncryptor());
         $this->subscriber->setEncryptor($replaceEncryptor);
-        $this->assertSame($replaceEncryptor, $this->subscriber->getEncryptor());
+        self::assertSame($replaceEncryptor, $this->subscriber->getEncryptor());
         $this->subscriber->restoreEncryptor();
-        $this->assertSame($this->encryptor, $this->subscriber->getEncryptor());
+        self::assertSame($this->encryptor, $this->subscriber->getEncryptor());
     }
 
     public function testProcessFieldsEncrypt()
     {
         $user = new User('David', 'Switzerland');
 
-        $this->subscriber->processFields($user, true);
+        $em = $this->createMock(EntityManagerInterface::class);
 
-        $this->assertStringStartsWith('encrypted-', $user->name);
-        $this->assertStringStartsWith('encrypted-', $user->getAddress());
+        $this->subscriber->processFields($user, $em, true);
+
+        self::assertStringStartsWith('encrypted-', $user->name);
+        self::assertStringStartsWith('encrypted-', $user->getAddress());
     }
 
     public function testProcessFieldsEncryptExtend()
     {
         $user = new ExtendedUser('David', 'Switzerland', 'extra');
 
-        $this->subscriber->processFields($user, true);
+        $em = $this->createMock(EntityManagerInterface::class);
 
-        $this->assertStringStartsWith('encrypted-', $user->name);
-        $this->assertStringStartsWith('encrypted-', $user->getAddress());
-        $this->assertStringStartsWith('encrypted-', $user->extra);
+        $this->subscriber->processFields($user, $em, true);
+
+        self::assertStringStartsWith('encrypted-', $user->name);
+        self::assertStringStartsWith('encrypted-', $user->getAddress());
+        self::assertStringStartsWith('encrypted-', $user->extra);
     }
 
     public function testProcessFieldsEncryptEmbedded()
     {
         $withUser = new WithUser('Thing', 'foo', new User('David', 'Switzerland'));
 
-        $this->subscriber->processFields($withUser, true);
+        $em = $this->createMock(EntityManagerInterface::class);
 
-        $this->assertStringStartsWith('encrypted-', $withUser->name);
-        $this->assertSame('foo', $withUser->foo);
-        $this->assertStringStartsWith('encrypted-', $withUser->user->name);
-        $this->assertStringStartsWith('encrypted-', $withUser->user->getAddress());
+        $this->subscriber->processFields($withUser, $em, true);
+
+        self::assertStringStartsWith('encrypted-', $withUser->name);
+        self::assertSame('foo', $withUser->foo);
+        self::assertStringStartsWith('encrypted-', $withUser->user->name);
+        self::assertStringStartsWith('encrypted-', $withUser->user->getAddress());
     }
 
     public function testProcessFieldsEncryptNull()
     {
         $user = new User('David', null);
 
-        $this->subscriber->processFields($user, true);
+        $em = $this->createMock(EntityManagerInterface::class);
 
-        $this->assertStringStartsWith('encrypted-', $user->name);
-        $this->assertNull($user->getAddress());
+        $this->subscriber->processFields($user, $em, true);
+
+        self::assertStringStartsWith('encrypted-', $user->name);
+        self::assertNull($user->getAddress());
     }
 
     public function testProcessFieldsNoEncryptor()
     {
         $user = new User('David', 'Switzerland');
 
-        $this->subscriber->setEncryptor(null);
-        $this->subscriber->processFields($user, true);
+        $em = $this->createMock(EntityManagerInterface::class);
 
-        $this->assertSame('David', $user->name);
-        $this->assertSame('Switzerland', $user->getAddress());
+        $this->subscriber->setEncryptor(null);
+        $this->subscriber->processFields($user, $em, true);
+
+        self::assertSame('David', $user->name);
+        self::assertSame('Switzerland', $user->getAddress());
     }
 
     public function testProcessFieldsDecrypt()
     {
         $user = new User('encrypted-David<ENC>', 'encrypted-Switzerland<ENC>');
 
-        $this->subscriber->processFields($user, false);
+        $em = $this->createMock(EntityManagerInterface::class);
 
-        $this->assertSame('David', $user->name);
-        $this->assertSame('Switzerland', $user->getAddress());
+        $this->subscriber->processFields($user, $em, false);
+
+        self::assertSame('David', $user->name);
+        self::assertSame('Switzerland', $user->getAddress());
     }
 
     public function testProcessFieldsDecryptExtended()
     {
         $user = new ExtendedUser('encrypted-David<ENC>', 'encrypted-Switzerland<ENC>', 'encrypted-extra<ENC>');
 
-        $this->subscriber->processFields($user, false);
+        $em = $this->createMock(EntityManagerInterface::class);
 
-        $this->assertSame('David', $user->name);
-        $this->assertSame('Switzerland', $user->getAddress());
-        $this->assertSame('extra', $user->extra);
+        $this->subscriber->processFields($user, $em, false);
+
+        self::assertSame('David', $user->name);
+        self::assertSame('Switzerland', $user->getAddress());
+        self::assertSame('extra', $user->extra);
     }
 
     public function testProcessFieldsDecryptEmbedded()
     {
         $withUser = new WithUser('encrypted-Thing<ENC>', 'foo', new User('encrypted-David<ENC>', 'encrypted-Switzerland<ENC>'));
 
-        $this->subscriber->processFields($withUser, false);
+        $em = $this->createMock(EntityManagerInterface::class);
 
-        $this->assertSame('Thing', $withUser->name);
-        $this->assertSame('foo', $withUser->foo);
-        $this->assertSame('David', $withUser->user->name);
-        $this->assertSame('Switzerland', $withUser->user->getAddress());
+        $this->subscriber->processFields($withUser, $em, false);
+
+        self::assertSame('Thing', $withUser->name);
+        self::assertSame('foo', $withUser->foo);
+        self::assertSame('David', $withUser->user->name);
+        self::assertSame('Switzerland', $withUser->user->getAddress());
     }
 
     public function testProcessFieldsDecryptNull()
     {
         $user = new User('encrypted-David<ENC>', null);
 
-        $this->subscriber->processFields($user, false);
+        $em = $this->createMock(EntityManagerInterface::class);
 
-        $this->assertSame('David', $user->name);
-        $this->assertNull($user->getAddress());
+        $this->subscriber->processFields($user, $em, false);
+
+        self::assertSame('David', $user->name);
+        self::assertNull($user->getAddress());
     }
 
     public function testProcessFieldsDecryptNonEncrypted()
@@ -184,10 +161,12 @@ class DoctrineEncryptSubscriberTest extends TestCase
         // no trailing <ENC> but somethint that our mock decrypt would change if called
         $user = new User('encrypted-David', 'encrypted-Switzerland');
 
-        $this->subscriber->processFields($user, false);
+        $em = $this->createMock(EntityManagerInterface::class);
 
-        $this->assertSame('encrypted-David', $user->name);
-        $this->assertSame('encrypted-Switzerland', $user->getAddress());
+        $this->subscriber->processFields($user, $em, false);
+
+        self::assertSame('encrypted-David', $user->name);
+        self::assertSame('encrypted-Switzerland', $user->getAddress());
     }
 
     /**
@@ -198,25 +177,23 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $user = new User('David', 'Switzerland');
 
         $uow = $this->createMock(UnitOfWork::class);
-        $uow->expects($this->any())
+        $uow->expects(self::any())
             ->method('getScheduledEntityInsertions')
-            ->willReturn([$user])
-        ;
+            ->willReturn([$user]);
         $em = $this->createMock(EntityManagerInterface::class);
-        $em->expects($this->any())
+        $em->expects(self::any())
             ->method('getUnitOfWork')
-            ->willReturn($uow)
-        ;
+            ->willReturn($uow);
         $classMetaData = $this->createMock(ClassMetadata::class);
-        $em->expects($this->once())->method('getClassMetadata')->willReturn($classMetaData);
-        $uow->expects($this->once())->method('recomputeSingleEntityChangeSet');
+        $em->expects(self::once())->method('getClassMetadata')->willReturn($classMetaData);
+        $uow->expects(self::once())->method('recomputeSingleEntityChangeSet');
 
         $onFlush = new OnFlushEventArgs($em);
 
         $this->subscriber->onFlush($onFlush);
 
-        $this->assertStringStartsWith('encrypted-', $user->name);
-        $this->assertStringStartsWith('encrypted-', $user->getAddress());
+        self::assertStringStartsWith('encrypted-', $user->name);
+        self::assertStringStartsWith('encrypted-', $user->getAddress());
     }
 
     /**
@@ -227,20 +204,57 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $user = new User('encrypted-David<ENC>', 'encrypted-Switzerland<ENC>');
 
         $uow = $this->createMock(UnitOfWork::class);
-        $uow->expects($this->any())
+        $uow->expects(self::any())
             ->method('getIdentityMap')
-            ->willReturn([[$user]])
-        ;
+            ->willReturn([[$user]]);
         $em = $this->createMock(EntityManagerInterface::class);
-        $em->expects($this->any())
+        $em->expects(self::any())
             ->method('getUnitOfWork')
-            ->willReturn($uow)
-        ;
+            ->willReturn($uow);
         $postFlush = new PostFlushEventArgs($em);
 
         $this->subscriber->postFlush($postFlush);
 
-        $this->assertSame('David', $user->name);
-        $this->assertSame('Switzerland', $user->getAddress());
+        self::assertSame('David', $user->name);
+        self::assertSame('Switzerland', $user->getAddress());
+    }
+
+    protected function setUp()
+    {
+        $this->encryptor = $this->createMock(EncryptorInterface::class);
+        $this->encryptor
+            ->expects(self::any())
+            ->method('encrypt')
+            ->willReturnCallback(
+                function (string $arg) {
+                    return 'encrypted-' . $arg;
+                }
+            );
+        $this->encryptor
+            ->expects(self::any())
+            ->method('decrypt')
+            ->willReturnCallback(
+                function (string $arg) {
+                    return preg_replace('/^encrypted-/', '', $arg);
+                }
+            );
+
+        $reader = $this->createMock(Reader::class);
+        $reader->expects(self::any())
+            ->method('getPropertyAnnotation')
+            ->willReturnCallback(
+                function (\ReflectionProperty $reflProperty, string $class) {
+                    if (Encrypted::class === $class) {
+                        return \in_array($reflProperty->getName(), ['name', 'address', 'extra']);
+                    }
+                    if (Embedded::class === $class) {
+                        return 'user' === $reflProperty->getName();
+                    }
+
+                    return false;
+                }
+            );
+
+        $this->subscriber = new DoctrineEncryptSubscriber($reader, $this->encryptor);
     }
 }
