@@ -30,6 +30,42 @@ class DoctrineEncryptSubscriberTest extends TestCase
      */
     private $encryptor;
 
+    protected function setUp()
+    {
+        $this->encryptor = $this->createMock(EncryptorInterface::class);
+        $this->encryptor
+            ->expects(self::any())
+            ->method('encrypt')
+            ->willReturnCallback(function (string $arg) {
+                return 'encrypted-'.$arg;
+            })
+        ;
+        $this->encryptor
+            ->expects(self::any())
+            ->method('decrypt')
+            ->willReturnCallback(function (string $arg) {
+                return preg_replace('/^encrypted-/', '', $arg);
+            })
+        ;
+
+        $reader = $this->createMock(Reader::class);
+        $reader->expects(self::any())
+            ->method('getPropertyAnnotation')
+            ->willReturnCallback(function (\ReflectionProperty $reflProperty, string $class) {
+                if (Encrypted::class === $class) {
+                    return \in_array($reflProperty->getName(), ['name', 'address', 'extra']);
+                }
+                if (Embedded::class === $class) {
+                    return 'user' === $reflProperty->getName();
+                }
+
+                return false;
+            })
+        ;
+
+        $this->subscriber = new DoctrineEncryptSubscriber($reader, $this->encryptor);
+    }
+
     public function testSetRestoreEncryptor()
     {
         $replaceEncryptor = $this->createMock(EncryptorInterface::class);
@@ -179,14 +215,16 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $uow = $this->createMock(UnitOfWork::class);
         $uow->expects(self::any())
             ->method('getScheduledEntityInsertions')
-            ->willReturn([$user]);
+            ->willReturn([$user])
+        ;
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects(self::any())
             ->method('getUnitOfWork')
-            ->willReturn($uow);
+            ->willReturn($uow)
+        ;
         $classMetaData = $this->createMock(ClassMetadata::class);
-        $em->expects(self::once())->method('getClassMetadata')->willReturn($classMetaData);
-        $uow->expects(self::once())->method('recomputeSingleEntityChangeSet');
+        $em->expects(self::any())->method('getClassMetadata')->willReturn($classMetaData);
+        $uow->expects(self::any())->method('recomputeSingleEntityChangeSet');
 
         $onFlush = new OnFlushEventArgs($em);
 
@@ -206,55 +244,18 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $uow = $this->createMock(UnitOfWork::class);
         $uow->expects(self::any())
             ->method('getIdentityMap')
-            ->willReturn([[$user]]);
+            ->willReturn([[$user]])
+        ;
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects(self::any())
             ->method('getUnitOfWork')
-            ->willReturn($uow);
+            ->willReturn($uow)
+        ;
         $postFlush = new PostFlushEventArgs($em);
 
         $this->subscriber->postFlush($postFlush);
 
         self::assertSame('David', $user->name);
         self::assertSame('Switzerland', $user->getAddress());
-    }
-
-    protected function setUp()
-    {
-        $this->encryptor = $this->createMock(EncryptorInterface::class);
-        $this->encryptor
-            ->expects(self::any())
-            ->method('encrypt')
-            ->willReturnCallback(
-                function (string $arg) {
-                    return 'encrypted-' . $arg;
-                }
-            );
-        $this->encryptor
-            ->expects(self::any())
-            ->method('decrypt')
-            ->willReturnCallback(
-                function (string $arg) {
-                    return preg_replace('/^encrypted-/', '', $arg);
-                }
-            );
-
-        $reader = $this->createMock(Reader::class);
-        $reader->expects(self::any())
-            ->method('getPropertyAnnotation')
-            ->willReturnCallback(
-                function (\ReflectionProperty $reflProperty, string $class) {
-                    if (Encrypted::class === $class) {
-                        return \in_array($reflProperty->getName(), ['name', 'address', 'extra']);
-                    }
-                    if (Embedded::class === $class) {
-                        return 'user' === $reflProperty->getName();
-                    }
-
-                    return false;
-                }
-            );
-
-        $this->subscriber = new DoctrineEncryptSubscriber($reader, $this->encryptor);
     }
 }

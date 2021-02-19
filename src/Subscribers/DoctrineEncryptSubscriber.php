@@ -238,6 +238,13 @@ class DoctrineEncryptSubscriber implements EventSubscriber
 
             $realClass = ClassUtils::getClass($entity);
 
+            $className = get_class($entity);
+
+            $classMetadata = $em->getClassMetadata($className);
+            if(null !== $classMetadata) {
+                $className = $classMetadata->getName();
+            }
+
             // Get ReflectionClass of our entity
             $properties = $this->getClassProperties($realClass);
 
@@ -259,12 +266,12 @@ class DoctrineEncryptSubscriber implements EventSubscriber
                             $this->decryptCounter++;
                             $currentPropValue = $this->encryptor->decrypt(substr($value, 0, -strlen(self::ENCRYPTION_MARKER)));
                             $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
-                            $this->cachedDecryptions[$em->getClassMetadata(get_class($entity))->getName()][spl_object_id($entity)][$refProperty->getName()][$currentPropValue] = $value;
+                            $this->cachedDecryptions[$className][spl_object_id($entity)][$refProperty->getName()][$currentPropValue] = $value;
                         }
                     } else {
                         if (!empty($value)) {
-                            if (isset($this->cachedDecryptions[$em->getClassMetadata(get_class($entity))->getName()][spl_object_id($entity)][$refProperty->getName()][$value])) {
-                                $pac->setValue($entity, $refProperty->getName(), $this->cachedDecryptions[$em->getClassMetadata(get_class($entity))->getName()][spl_object_id($entity)][$refProperty->getName()][$value]);
+                            if (isset($this->cachedDecryptions[$className][spl_object_id($entity)][$refProperty->getName()][$value])) {
+                                $pac->setValue($entity, $refProperty->getName(), $this->cachedDecryptions[$className][spl_object_id($entity)][$refProperty->getName()][$value]);
                             } elseif (substr($value, -strlen(self::ENCRYPTION_MARKER)) !== self::ENCRYPTION_MARKER) {
                                 $this->encryptCounter++;
                                 $currentPropValue = $this->encryptor->encrypt($value).self::ENCRYPTION_MARKER;
