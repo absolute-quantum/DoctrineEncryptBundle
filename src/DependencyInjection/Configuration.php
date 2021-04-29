@@ -38,6 +38,9 @@ class Configuration implements ConfigurationInterface
                     ->scalarNode('secret_directory_path')
                         ->defaultValue('%kernel.project_dir%')
                     ->end()
+                    ->scalarNode('secret_key_name')
+                        ->defaultValue('')
+                    ->end()
                 ->end();
 
         return $treeBuilder;

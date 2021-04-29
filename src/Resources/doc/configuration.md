@@ -13,6 +13,7 @@ This parameter is also optional.
 ambta_doctrine_encrypt:
     encryptor_class: Halite # or Defuse
     secret_directory_path: '%kernel.project_dir%'   # Path where to store the keyfiles
+    secret_key_name: CustomEncryptKey # only the key file name without .key extension
 ```
 
 ## Important!
