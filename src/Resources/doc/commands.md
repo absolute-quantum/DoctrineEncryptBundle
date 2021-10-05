@@ -7,7 +7,7 @@ To make your life a little easier we created some commands that you can use for 
 You can use the comment `doctrine:encrypt:status` to get the current database and encryption information.
 
 ```
-$ php app/console doctrine:encrypt:status
+$ php bin/console doctrine:encrypt:status
 ```
 
 This command will return the amount of entities and the amount of properties with the @Encrypted tag for each entity.
@@ -29,17 +29,17 @@ You can use the comment `doctrine:encrypt:database [encryptor]` to encrypt the c
     * Default: Your encryptor set in the configuration file or the default encryption class when not set in the configuration file
 
 ```
-$ php app/console doctrine:encrypt:database
+$ php bin/console doctrine:encrypt:database
 ```
 
 or you can provide an encryptor (optional).
 
 ```
-$ php app/console doctrine:encrypt:database Defuse
+$ php bin/console doctrine:encrypt:database Defuse
 ```
 
 ```
-$ php app/console doctrine:encrypt:database Halite
+$ php bin/console doctrine:encrypt:database Halite
 ```
 
 This command will return the amount of values encrypted in the database.
@@ -58,17 +58,17 @@ You can use the comment `doctrine:decrypt:database [encryptor]` to decrypt the c
     * Default: Your encryptor set in the configuration file or the default encryption class when not set in the configuration file
 
 ```
-$ php app/console doctrine:decrypt:database
+$ php bin/console doctrine:decrypt:database
 ```
 
 or you can provide an encryptor (optional).
 
 ```
-$ php app/console doctrine:decrypt:database Defuse
+$ php bin/console doctrine:decrypt:database Defuse
 ```
 
 ```
-$ php app/console doctrine:decrypt:database Halite
+$ php bin/console doctrine:decrypt:database Halite
 ```
 
 This command will return the amount of entities and the amount of values decrypted in the database.
