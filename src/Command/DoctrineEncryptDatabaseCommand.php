@@ -69,7 +69,7 @@ class DoctrineEncryptDatabaseCommand extends AbstractCommand
         );
 
         if (!$question->ask($input, $output, $confirmationQuestion)) {
-            return 1;
+            return AbstractCommand::FAILURE;
         }
 
         // Start decrypting database
@@ -101,6 +101,8 @@ class DoctrineEncryptDatabaseCommand extends AbstractCommand
 
         // Say it is finished
         $output->writeln('Encryption finished. Values encrypted: <info>' . $this->subscriber->encryptCounter . ' values</info>.' . PHP_EOL . 'All values are now encrypted.');
+        
+        return AbstractCommand::SUCCESS;
     }
 
 
