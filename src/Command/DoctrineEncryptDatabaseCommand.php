@@ -69,7 +69,7 @@ class DoctrineEncryptDatabaseCommand extends AbstractCommand
         );
 
         if (!$question->ask($input, $output, $confirmationQuestion)) {
-            return 1;
+            return AbstractCommand::FAILURE;
         }
 
         // Start decrypting database
@@ -104,4 +104,5 @@ class DoctrineEncryptDatabaseCommand extends AbstractCommand
     }
 
 
+        return AbstractCommand::SUCCESS;
 }

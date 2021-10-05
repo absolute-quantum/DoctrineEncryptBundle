@@ -82,7 +82,7 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
         );
 
         if (!$question->ask($input, $output, $confirmationQuestion)) {
-            return 1;
+            return AbstractCommand::FAILURE;
         }
 
         // Start decrypting database
@@ -146,5 +146,7 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
         }
 
         $output->writeln('' . PHP_EOL . 'Decryption finished values found: <info>' . $valueCounter . '</info>, decrypted: <info>' . $this->subscriber->decryptCounter . '</info>.' . PHP_EOL . 'All values are now decrypted.');
+
+        return AbstractCommand::SUCCESS;
     }
 }
