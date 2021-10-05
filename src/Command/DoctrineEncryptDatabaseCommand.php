@@ -101,8 +101,9 @@ class DoctrineEncryptDatabaseCommand extends AbstractCommand
 
         // Say it is finished
         $output->writeln('Encryption finished. Values encrypted: <info>' . $this->subscriber->encryptCounter . ' values</info>.' . PHP_EOL . 'All values are now encrypted.');
+        
+        return AbstractCommand::SUCCESS;
     }
 
 
-        return AbstractCommand::SUCCESS;
 }
