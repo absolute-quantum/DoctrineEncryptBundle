@@ -12,9 +12,12 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class DefuseEncryptor implements EncryptorInterface
 {
-    private Filesystem $fs;
-    private ?string $encryptionKey = null;
-    private string $keyFile;
+    /** @var Filesystem  */
+    private $fs;
+    /** @var string|null  */
+    private $encryptionKey = null;
+    /** @var string  */
+    private $keyFile;
 
     /**
      * {@inheritdoc}

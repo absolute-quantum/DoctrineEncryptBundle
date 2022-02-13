@@ -62,3 +62,8 @@ Filename example: `.DefuseEncryptor.key` or `.HaliteEncryptor.key`
 * [Usage](src/Resources/doc/usage.md)
 * [Console commands](src/Resources/doc/commands.md)
 * [Custom encryption class](src/Resources/doc/custom_encryptor.md)
+
+### Demo
+
+Two demo-installations, one using symfony 4.4 and one using symfony 6.x, can be found in this repository in [`demo`](demo).  This demonstrates how to use 
+the application using both annotations and, when using php > 8.0, attributes.

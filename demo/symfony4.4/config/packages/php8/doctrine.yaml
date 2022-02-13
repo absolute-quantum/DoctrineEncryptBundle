@@ -1,0 +1,15 @@
+doctrine:
+    orm:
+        mappings:
+            Annotation:
+                type: 'annotation'
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity/Annotation'
+                prefix: 'App\Entity\Annotation'
+                alias: App
+            Attributes:
+                type: 'attribute'
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity/Attribute'
+                prefix: 'App\Entity\Attribute'
+                alias: App

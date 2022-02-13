@@ -1,0 +1,26 @@
+{
+    "name": "absolute-quantum/doctrine-encrypt-bundle-demo",
+    "description": "Symlinks shared directories",
+    "type": "metapackage",
+    "require": {
+        "kporras07/composer-symlinks": "^1.1"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "Kporras07\\ComposerSymlinks\\ScriptHandler::createSymlinks"
+        ],
+        "post-update-cmd": [
+            "Kporras07\\ComposerSymlinks\\ScriptHandler::createSymlinks"
+        ]
+    },
+    "extra": {
+        "symlinks": {
+            "shared/templates":     "symfony4.4/templates",
+            "./shared/templates":   "symfony6.x/templates",
+            "shared/var/data.db":   "symfony4.4/var/data.db",
+            "./shared/var/data.db": "symfony6.x/var/data.db",
+            "shared/.Halite.key":   "symfony4.4/.Halite.key",
+            "./shared/.Halite.key": "symfony6.x/.Halite.key"
+        }
+    }
+}

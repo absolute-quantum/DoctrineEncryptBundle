@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}Welcome!{% endblock %}</title>
+        <style>
+            table {
+                font-size:16px;
+                font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+                border-collapse: collapse;
+                border-spacing: 0;
+                width: 100%;
+            }
+
+            td, th {
+                border: 1px solid #ddd;
+                text-align: left;
+                padding: 8px;
+            }
+
+            tr:nth-child(even){background-color: #f2f2f2}
+
+            th {
+                padding-top: 11px;
+                padding-bottom: 11px;
+                background-color: #04AA6D;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+    <h1>Hello World!</h1>
+    <h2>Symfony {{ appVersion }} using php{{ constant('PHP_MAJOR_VERSION')~'.'~constant('PHP_MINOR_VERSION') }}</h2>
+    <table>
+        <tr>
+            <th>Type</th>
+            <th>Name</th>
+            <th>Secret</th>
+            <th>Raw Secret (as stored in DB)</th>
+        </tr>
+        {% for secret in secrets %}
+            <tr>
+                <td>{{ secret.type }}</td>
+                <td>{{ secret.name }}</td>
+                <td>{{ secret.secret }}</td>
+                <td>{{ secret.rawSecret }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    </body>
+</html>

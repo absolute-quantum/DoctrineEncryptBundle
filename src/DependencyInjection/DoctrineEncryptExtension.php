@@ -31,7 +31,7 @@ class DoctrineEncryptExtension extends Extension
         $config = $this->processConfiguration($configuration, $configs);
 
         // If empty encryptor class, use Halite encryptor
-        if (in_array($config['encryptor_class'], array_keys(self::SupportedEncryptorClasses))) {
+        if (array_key_exists($config['encryptor_class'], self::SupportedEncryptorClasses)) {
             $config['encryptor_class_full'] = self::SupportedEncryptorClasses[$config['encryptor_class']];
         } else {
             $config['encryptor_class_full'] = $config['encryptor_class'];
@@ -44,6 +44,11 @@ class DoctrineEncryptExtension extends Extension
         // Load service file
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
+
+        // Remove usage of AttributeAnnotationReader when using php < 8.0
+        if (PHP_VERSION_ID < 80000) {
+            $container->setAlias('ambta_doctrine_annotation_reader','annotations.reader');
+        }
     }
 
     /**

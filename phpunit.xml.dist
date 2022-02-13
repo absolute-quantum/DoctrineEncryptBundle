@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<phpunit bootstrap="./Tests/bootstrap.php"
+<phpunit bootstrap="./tests/bootstrap.php"
          colors="true"
          convertErrorsToExceptions="true"
          convertNoticesToExceptions="true"
@@ -8,10 +8,10 @@
 
     <testsuites>
         <testsuite name="unit">
-            <directory suffix="Test.php">./Tests/Unit</directory>
+            <directory suffix="Test.php">./tests/Unit</directory>
         </testsuite>
         <testsuite name="functional">
-            <directory suffix="Test.php">./Tests/Functional</directory>
+            <directory suffix="Test.php">./tests/Functional</directory>
         </testsuite>
     </testsuites>
 
@@ -26,7 +26,8 @@
     </coverage>
 
     <php>
-        <env name="KERNEL_DIR" value="./Tests/Functional/Fixtures/app" />
+        <ini name="error_reporting" value="E_ALL ^ E_DEPRECATED" />
+        <env name="KERNEL_DIR" value="./tests/Functional/Fixtures/app" />
         <env name="KERNEL_CLASS" value="AppKernel" />
         <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak" />
     </php>

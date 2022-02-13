@@ -1,0 +1,113 @@
+# This file was heavily based on the ci-file from SymfonyCasts/verify-email-bundle
+#
+# See https://github.com/SymfonyCasts/verify-email-bundle
+#     https://github.com/SymfonyCasts/verify-email-bundle/blob/main/.github/workflows/ci.yml
+
+name: CI
+on:
+  push:
+    branches: ['main','master']
+  pull_request:
+
+jobs:
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: "Checkout code"
+        uses: "actions/checkout@v2"
+
+      - name: "Install PHP"
+        uses: "shivammathur/setup-php@v2"
+        with:
+          coverage: "none"
+          php-version: "8.0"
+
+      - name: "Validate composer.json"
+        run: "composer validate --strict --no-check-lock"
+
+      - name: "Validate php-files"
+        run:  "php -l src && php -l tests"
+
+      - name: "Composer install"
+        uses: "ramsey/composer-install@v2"
+        with:
+            composer-options: "--prefer-stable"
+            dependency-versions: 'highest'
+
+      - name: "PHPStan"
+        run:  "vendor/bin/phpstan analyze"
+
+      - name: "PHPCompatibility"
+        run:  "vendor/bin/phpcs src/ tests/ --standard=PHPCompatibility --runtime-set testVersion 7.2-8.1"
+
+  tests:
+    name: "Tests ${{ matrix.php-version }} ${{ matrix.dependency-versions }}"
+    runs-on: ubuntu-18.04
+    needs: static-analysis
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # normal, highest, non-dev installs
+        php-version: ['7.2', '7.3', '7.4', '8.0', '8.1']
+        composer-options: ['--prefer-stable']
+        dependency-versions: ['highest']
+        include:
+          # testing lowest PHP version with lowest dependencies
+          - php-version: '7.2.5'
+            dependency-versions: 'lowest'
+            composer-options: '--prefer-lowest'
+
+    steps:
+      - name: "Checkout code"
+        uses: "actions/checkout@v2"
+
+      - name: "Install PHP"
+        uses: "shivammathur/setup-php@v2"
+        with:
+          coverage: "none"
+          php-version: "${{ matrix.php-version }}"
+
+#      - name: Install Global Dependencies
+#        run: |
+#          composer global require --no-progress --no-scripts --no-plugins symfony/flex >=1.x
+ 
+      - name: "Composer install"
+        uses: "ramsey/composer-install@v2"
+        with:
+          dependency-versions: "${{ matrix.dependency-versions }}"
+          composer-options: "--prefer-dist --no-progress"
+
+      - name: Unit Tests
+        run: vendor/bin/phpunit
+
+      - name: Install symlinks for demo's
+        uses: "ramsey/composer-install@v2"
+        with:
+          dependency-versions: "${{ matrix.dependency-versions }}"
+          composer-options: "--prefer-dist --no-progress"
+          working-directory: "demo"
+
+      - name: Demo symfony4.4 - Install  dependencies
+        uses: "ramsey/composer-install@v2"
+        with:
+          dependency-versions: "${{ matrix.dependency-versions }}"
+          composer-options: "--prefer-dist --no-progress"
+          working-directory: "demo/symfony4.4"
+
+      - name: Demo symfony4.4 - Unit Tests
+        run: demo/symfony4.4/vendor/bin/simple-phpunit -c demo/symfony4.4/phpunit.xml.dist
+
+      - name: Demo symfony6.x - Install  dependencies
+        uses: "ramsey/composer-install@v2"
+        with:
+          dependency-versions: "${{ matrix.dependency-versions }}"
+          composer-options: "--prefer-dist --no-progress"
+          working-directory: "demo/symfony6.x"
+        if: ${{ startsWith(matrix.php-version , '8.') }}
+
+      - name: Demo symfony6.x - Unit Tests
+        run: demo/symfony6.x/vendor/bin/simple-phpunit -c demo/symfony6.x/phpunit.xml.dist
+        if: ${{ startsWith(matrix.php-version , '8.') }}

@@ -1,0 +1,8 @@
+twig:
+    default_path: '%kernel.project_dir%/templates'
+    globals:
+        appVersion: "6.x"
+
+when@test:
+    twig:
+        strict_variables: true

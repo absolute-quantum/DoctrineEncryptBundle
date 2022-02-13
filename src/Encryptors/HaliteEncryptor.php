@@ -16,8 +16,10 @@ use ParagonIE\Halite\Symmetric\Crypto;
 
 class HaliteEncryptor implements EncryptorInterface
 {
-    private ?EncryptionKey $encryptionKey = null;
-    private string $keyFile;
+    /** @var EncryptionKey|null  */
+    private $encryptionKey = null;
+    /** @var string */
+    private $keyFile;
 
     /**
      * {@inheritdoc}
@@ -40,14 +42,7 @@ class HaliteEncryptor implements EncryptorInterface
      */
     public function decrypt(string $data): string
     {
-        $data = Crypto::decrypt($data, $this->getKey());
-
-        if ($data instanceof HiddenString)
-        {
-            $data = $data->getString();
-        }
-
-        return $data;
+         return Crypto::decrypt($data, $this->getKey())->getString();
     }
 
     private function getKey(): EncryptionKey

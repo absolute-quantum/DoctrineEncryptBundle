@@ -17,12 +17,12 @@ final class AttributeAnnotationReader implements Reader
     /**
      * @var Reader
      */
-    private Reader $annotationReader;
+    private $annotationReader;
 
     /**
      * @var AttributeReader
      */
-    private AttributeReader $attributeReader;
+    private $attributeReader;
 
     public function __construct(AttributeReader $attributeReader, Reader $annotationReader)
     {

@@ -14,7 +14,7 @@ use ReflectionClass;
 final class AttributeReader
 {
     /** @var array */
-    private array $isRepeatableAttribute = [];
+    private $isRepeatableAttribute = [];
 
     /**
      * @param ReflectionClass $class
@@ -30,7 +30,7 @@ final class AttributeReader
      *
      * @return Annotation|Annotation[]|null
      */
-    public function getClassAnnotation(ReflectionClass $class, string $annotationName): array|Annotation|null
+    public function getClassAnnotation(ReflectionClass $class, string $annotationName)
     {
         return $this->getClassAnnotations($class)[$annotationName] ?? null;
     }
@@ -49,7 +49,7 @@ final class AttributeReader
      *
      * @return Annotation|Annotation[]|null
      */
-    public function getPropertyAnnotation(\ReflectionProperty $property, string $annotationName): array|Annotation|null
+    public function getPropertyAnnotation(\ReflectionProperty $property, string $annotationName)
     {
         return $this->getPropertyAnnotations($property)[$annotationName] ?? null;
     }
@@ -100,3 +100,5 @@ final class AttributeReader
         return $this->isRepeatableAttribute[$attributeClassName] = ($attribute->flags & Attribute::IS_REPEATABLE) > 0;
     }
 }
+
+

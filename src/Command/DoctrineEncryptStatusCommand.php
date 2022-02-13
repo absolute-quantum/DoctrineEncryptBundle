@@ -33,7 +33,7 @@ class DoctrineEncryptStatusCommand extends AbstractCommand
 
         $totalCount = 0;
         foreach ($metaDataArray as $metaData) {
-            if ($metaData instanceof ClassMetadataInfo  and $metaData->isMappedSuperclass) {
+            if ($metaData instanceof ClassMetadataInfo && $metaData->isMappedSuperclass) {
                 continue;
             }
 
@@ -53,6 +53,7 @@ class DoctrineEncryptStatusCommand extends AbstractCommand
 
         $output->writeln('');
         $output->writeln(sprintf('<info>%d</info> entities found which are containing <info>%d</info> encrypted properties.', count($metaDataArray), $totalCount));
-        return 1;
+
+        return 0;
     }
 }
