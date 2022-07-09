@@ -99,7 +99,7 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
             $output->writeln(sprintf('Processing <comment>%s</comment>', $metaData->name));
             $progressBar = new ProgressBar($output, $totalCount);
             foreach ($iterator as $row) {
-                $entity = $row[0];
+                $entity = is_array($row) ? $row[0] : $row;
 
                 // Create reflectionClass for each entity
                 $entityReflectionClass = new \ReflectionClass($entity);
