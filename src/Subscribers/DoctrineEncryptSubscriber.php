@@ -121,7 +121,7 @@ class DoctrineEncryptSubscriber implements EventSubscriber
      */
     public function postUpdate(LifecycleEventArgs $args)
     {
-        $entity = $args->getEntity();
+        $entity = $args->getObject();
         $this->processFields($entity, false);
     }
 
@@ -133,7 +133,7 @@ class DoctrineEncryptSubscriber implements EventSubscriber
      */
     public function preUpdate(PreUpdateEventArgs $args)
     {
-        $entity = $args->getEntity();
+        $entity = $args->getObject();
         $this->processFields($entity);
     }
 
@@ -145,7 +145,7 @@ class DoctrineEncryptSubscriber implements EventSubscriber
      */
     public function postLoad(LifecycleEventArgs $args)
     {
-        $entity = $args->getEntity();
+        $entity = $args->getObject();
         $this->processFields($entity, false);
     }
 
@@ -157,7 +157,7 @@ class DoctrineEncryptSubscriber implements EventSubscriber
      */
     public function preFlush(PreFlushEventArgs $preFlushEventArgs)
     {
-        $unitOfWOrk = $preFlushEventArgs->getEntityManager()->getUnitOfWork();
+        $unitOfWOrk = $preFlushEventArgs->getObjectManagerr()->getUnitOfWork();
         foreach ($unitOfWOrk->getIdentityMap() as $entityName => $entityArray) {
             if (isset($this->cachedDecryptions[$entityName])) {
                 foreach ($entityArray as $entityId => $instance) {
@@ -176,12 +176,12 @@ class DoctrineEncryptSubscriber implements EventSubscriber
      */
     public function onFlush(OnFlushEventArgs $onFlushEventArgs)
     {
-        $unitOfWork = $onFlushEventArgs->getEntityManager()->getUnitOfWork();
+        $unitOfWork = $onFlushEventArgs->getObjectManager()->getUnitOfWork();
         foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
             $encryptCounterBefore = $this->encryptCounter;
             $this->processFields($entity);
             if ($this->encryptCounter > $encryptCounterBefore ) {
-                $classMetadata = $onFlushEventArgs->getEntityManager()->getClassMetadata(get_class($entity));
+                $classMetadata = $onFlushEventArgs->getObjectManager()->getClassMetadata(get_class($entity));
                 $unitOfWork->recomputeSingleEntityChangeSet($classMetadata, $entity);
             }
         }
@@ -195,7 +195,7 @@ class DoctrineEncryptSubscriber implements EventSubscriber
      */
     public function postFlush(PostFlushEventArgs $postFlushEventArgs)
     {
-        $unitOfWork = $postFlushEventArgs->getEntityManager()->getUnitOfWork();
+        $unitOfWork = $postFlushEventArgs->getObjectManager()->getUnitOfWork();
         foreach ($unitOfWork->getIdentityMap() as $entityMap) {
             foreach ($entityMap as $entity) {
                 $this->processFields($entity, false);
