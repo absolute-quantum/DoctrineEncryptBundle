@@ -11,6 +11,7 @@ use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\Common\Annotations\Reader;
+use Doctrine\Common\Proxy\Proxy;
 use Doctrine\Common\Util\ClassUtils;
 use Ambta\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use ReflectionProperty;
@@ -161,6 +162,10 @@ class DoctrineEncryptSubscriber implements EventSubscriber
         foreach ($unitOfWOrk->getIdentityMap() as $entityName => $entityArray) {
             if (isset($this->cachedDecryptions[$entityName])) {
                 foreach ($entityArray as $entityId => $instance) {
+                    if ($instance instanceof Proxy && !$instance->__isInitialized()) {
+                        continue;
+                    }
+
                     $this->processFields($instance);
                 }
             }
@@ -198,6 +203,10 @@ class DoctrineEncryptSubscriber implements EventSubscriber
         $unitOfWork = $postFlushEventArgs->getEntityManager()->getUnitOfWork();
         foreach ($unitOfWork->getIdentityMap() as $entityMap) {
             foreach ($entityMap as $entity) {
+                if ($entity instanceof Proxy && !$entity->__isInitialized()) {
+                    continue;
+                }
+
                 $this->processFields($entity, false);
             }
         }
