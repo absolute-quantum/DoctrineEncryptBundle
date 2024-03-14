@@ -1,5 +1,5 @@
 {
-	"name": "absolute-quantum/doctrine-encrypt-bundle",
+	"name": "michaeldegroot/doctrine-encrypt-bundle",
 	"type": "library",
 	"keywords": ["doctrine", "symfony", "halite", "defuse", "encrypt", "decrypt"],
 	"license": "MIT",
